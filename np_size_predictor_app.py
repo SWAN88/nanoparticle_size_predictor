@@ -3,7 +3,6 @@ import pandas as pd
 import numpy as np
 import streamlit as st
 
-from pycaret.regression import load_model, predict_model
 import base64
 from sklearn.tree import DecisionTreeRegressor as DTR
 from sklearn.model_selection import GridSearchCV
