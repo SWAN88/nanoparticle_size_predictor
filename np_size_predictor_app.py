@@ -23,7 +23,7 @@ def get_table_download_link(df):
     return href
 
 """
-# :sports_medal: :microscope: AuNRs Size Prediction 
+# :microscope: AuNRs Size Prediction 
 ### Ver. 1.1 released on 10/1/2022
 
 **_Instruction_**:
@@ -63,8 +63,8 @@ if uploaded_file:
 if st.button("Prediction"):
 
     st.text('Predicted results')
-    dt_w_model = joblib.load('/Users/katsuyashiratori/Documents/GitHub/nanoparticle_size_predictor/joblib_width_gs.pkl')
-    dt_l_model = joblib.load('/Users/katsuyashiratori/Documents/GitHub/nanoparticle_size_predictor/joblib_length_gs.pkl')
+    dt_w_model = joblib.load('joblib_width_gs.pkl')
+    dt_l_model = joblib.load('joblib_length_gs.pkl')
 
     wexp_y_pred = dt_w_model.predict(exp_data)
     lexp_y_pred = dt_l_model.predict(exp_data)
