@@ -40,7 +40,7 @@ use_example_file = st.checkbox(
 )
 
 if use_example_file:
-    uploaded_file = "SampleData.csv"
+    uploaded_file = "/Users/katsuyashiratori/Documents/GitHub/nanoparticle_size_predictor/SampleData.csv"
 
 
 if uploaded_file:
@@ -52,8 +52,8 @@ if uploaded_file:
 if st.button("Prediction"):
 
     st.text('Predicted results')
-    dt_w_model = joblib.load('joblib_width_gs.pkl')
-    dt_l_model = joblib.load('joblib_length_gs.pkl')
+    dt_w_model = joblib.load('/Users/katsuyashiratori/Documents/GitHub/nanoparticle_size_predictor/joblib_width_gs.pkl')
+    dt_l_model = joblib.load('/Users/katsuyashiratori/Documents/GitHub/nanoparticle_size_predictor/joblib_length_gs.pkl')
 
     wexp_y_pred = dt_w_model.predict(exp_data)
     lexp_y_pred = dt_l_model.predict(exp_data)
