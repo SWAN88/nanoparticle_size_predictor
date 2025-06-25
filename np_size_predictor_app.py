@@ -63,8 +63,10 @@ if uploaded_file:
 if st.button("Prediction"):
 
     st.text('Predicted results')
-    dt_w_model = joblib.load(Path(__file__).parent / 'joblib_width_gs.pkl')
-    dt_l_model = joblib.load(Path(__file__).parent / 'joblib_length_gs.pkl')
+    w_model_path = Path(__file__).parent / 'joblib_width_gs.pkl'
+    l_model_path = Path(__file__).parent / 'joblib_length_gs.pkl'
+    dt_w_model = joblib.load(w_model_path)
+    dt_l_model = joblib.load(l_model_path)
 
     wexp_y_pred = dt_w_model.predict(exp_data)
     lexp_y_pred = dt_l_model.predict(exp_data)
