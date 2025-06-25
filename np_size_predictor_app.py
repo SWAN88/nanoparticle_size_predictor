@@ -51,9 +51,6 @@ if st.session_state.use_example_file:
     else:
         st.error("Not Found Error")
 
-# if use_example_file:
-#     uploaded_file = "SampleData.csv"
-
 if uploaded_file:
     exp_data = pd.read_csv(uploaded_file)
 
