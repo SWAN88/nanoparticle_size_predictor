@@ -41,7 +41,7 @@ use_example_file = st.checkbox(
 )
 
 if 'use_example_file' not in st.session_state:
-    st.session_state.use_example_file = False 
+    st.session_state.use_example_file = True 
 
 if st.session_state.use_example_file:
     example_path = Path(__file__).parent / "SampleData.csv"
