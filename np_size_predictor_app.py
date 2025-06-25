@@ -24,7 +24,7 @@ def get_table_download_link(df):
 
 """
 # :microscope: AuNRs Size Prediction 
-### Ver. 1.1 released on 10/1/2022
+### Ver. 1.2 released on 10/1/2022
 
 **_Instruction_**:
 1. Upload .csv file with first row "E_res" and "Linewidth" in eV.
@@ -41,7 +41,7 @@ use_example_file = st.checkbox(
 )
 
 if 'use_example_file' not in st.session_state:
-    st.session_state.use_example_file = True 
+    st.session_state.use_example_file = False 
 
 if st.session_state.use_example_file:
     example_path = Path(__file__).parent / "SampleData.csv"
