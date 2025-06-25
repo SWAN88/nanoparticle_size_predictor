@@ -2,34 +2,42 @@ import math
 import pandas as pd
 import numpy as np
 import streamlit as st
+import joblib
 import base64
 from sklearn.tree import DecisionTreeRegressor as DTR
 from sklearn.model_selection import GridSearchCV
 from bokeh.plotting import figure
 from pathlib import Path
-import joblib
 
 def get_table_download_link(df):
+    """Generates a link allowing the data in a given panda dataframe to be downloaded
+    in:  dataframe
+    out: href string
+    """
     csv = df.to_csv(index=False)
-    b64 = base64.b64encode(csv.encode()).decode()
+    b64 = base64.b64encode(csv.encode()).decode()  # some strings <-> bytes conversions necessary here
+    # href = f'<a href="data:file/csv;base64,{b64}">Download csv file</a>'
     href = f'<a href="data:file/csv;base64,{b64}" download="prediction_output.csv">Click here to download the outcome in .csv file</a>'
     return href
 
 # App description
-st.markdown("# :microscope: AuNRs Size Prediction\n### Ver. 1.2 released on 10/1/2022")
-st.markdown("""
+"""
+# :microscope: AuNRs Size Prediction 
+### Ver. 1.2 released on 10/1/2022
+
 **_Instruction_**:
 1. Upload .csv file with first row "E_res" and "Linewidth" in eV.
 2. Hit the prediction button
-""")
+"""
 
-# --- Experimental Data Input ---
+#  To input experimental data
 st.header('Experimental Data Input')
 
-exp_data = None  # initialize
-
-use_example_file = st.checkbox("Use example file", False, help="Use in-built example file to the app")
 uploaded_file = st.file_uploader("Upload your data", type="csv")
+
+use_example_file = st.checkbox(
+    "Use example file", False, help="Use in-built example file to the app"
+)
 
 if use_example_file:
     example_path = Path(__file__).parent / "SampleData.csv"
@@ -45,152 +53,56 @@ elif uploaded_file:
     st.markdown("### Data preview")
     st.dataframe(exp_data.head())
 
-# --- Prediction ---
 if st.button("Prediction"):
-    if exp_data is not None:
-        st.text('Predicted results')
 
-        # Load model
-        w_model_path = Path(__file__).parent / 'joblib_width_gs.pkl'
-        l_model_path = Path(__file__).parent / 'joblib_length_gs.pkl'
-        dt_w_model = joblib.load(w_model_path)
-        dt_l_model = joblib.load(l_model_path)
+    st.text('Predicted results')
+    w_model_path = Path(__file__).parent / 'joblib_width_gs.pkl'
+    l_model_path = Path(__file__).parent / 'joblib_length_gs.pkl'
+    dt_w_model = joblib.load(w_model_path)
+    dt_l_model = joblib.load(l_model_path)
 
-        # Predict
-        wexp_y_pred = dt_w_model.predict(exp_data)
-        lexp_y_pred = dt_l_model.predict(exp_data)
+    wexp_y_pred = dt_w_model.predict(exp_data)
+    lexp_y_pred = dt_l_model.predict(exp_data)
 
-        # Build output table
-        df = pd.DataFrame({
-            "Particle": range(1, len(exp_data) + 1),
-            "E_res (eV)": exp_data["E_res"],
-            "Linewidth (eV)": exp_data["Linewidth"],
-            "Predicted_Width (nm)": wexp_y_pred,
-            "Predicted_Length (nm)": lexp_y_pred,
-        })
+    df_P = pd.DataFrame({"Particle": range(1, len(exp_data['E_res']) + 1)})
+    df_E = pd.DataFrame({"E_res (eV)": exp_data['E_res']})
+    df_L = pd.DataFrame({"Linewidth (eV)": exp_data['Linewidth']})
+    df_w = pd.DataFrame({"Predicted_Width (nm)": wexp_y_pred})
+    df_l = pd.DataFrame({"Predicted_Length (nm)": lexp_y_pred})
+    df_A = pd.DataFrame({"Aspect Ratio": lexp_y_pred / wexp_y_pred})
+    DF1 = pd.concat([df_E, df_L], axis=1, sort=True)
+    DF2 = pd.concat([df_w, df_l], axis=1, sort=True)
+    dfff = pd.concat([DF1, DF2], axis=1, sort=True)
+    dff = pd.concat([df_P, dfff], axis=1, sort=True)
+    df = pd.concat([dff, df_A], axis=1, sort=True)
 
-        # Plot
-        p = figure(title='Scatter plot', x_axis_label='Predicted Width (nm)', y_axis_label='Predicted Length (nm)')
-        p.scatter(wexp_y_pred, lexp_y_pred, size=5)
-        st.bokeh_chart(p, use_container_width=True)
+    Mean_df_E = exp_data['E_res'].mean()
+    Mean_df_L = exp_data['Linewidth'].mean()
+    Mean_df_w = wexp_y_pred.mean()
+    Mean_df_l = lexp_y_pred.mean()
+    Mean_df_A = (lexp_y_pred / wexp_y_pred).mean()
 
-        # Download
-        st.markdown(get_table_download_link(df), unsafe_allow_html=True)
+    Std_df_E = exp_data['E_res'].std()
+    Std_df_L = exp_data['Linewidth'].std()
+    Std_df_w = wexp_y_pred.std()
+    Std_df_l = lexp_y_pred.std()
+    Std_df_A = (lexp_y_pred / wexp_y_pred).std()
 
-    else:
-        st.warning("Please upload a file or use the example data before prediction.")
+    column1 = ['Particle', 'E_res (eV)', 'Linewidth (eV)', 'Predicted_Width (nm)', 'Predicted_Length (nm)',
+               'Aspect Ratio']
+    list1 = [['Mean', Mean_df_E, Mean_df_L, Mean_df_w, Mean_df_l, Mean_df_A]]
+    list2 = [['Std', Std_df_E, Std_df_L, Std_df_w, Std_df_l, Std_df_A]]
+    df1 = pd.DataFrame(data=list1, columns=column1)
+    df2 = pd.DataFrame(data=list2, columns=column1)
+    df = df.append(df1, ignore_index=True)
+    df = df.append(df2, ignore_index=True)
 
+    p = figure(
+        title='Scatter plot',
+        x_axis_label='Predicted Width (nm)',
+        y_axis_label='Predicted Length (nm)')
 
+    p.scatter(wexp_y_pred, lexp_y_pred, size=5)
+    st.bokeh_chart(p, use_container_width=True)
 
-# import math
-# import pandas as pd
-# import numpy as np
-# import streamlit as st
-
-# import base64
-# from sklearn.tree import DecisionTreeRegressor as DTR
-# from sklearn.model_selection import GridSearchCV
-# # from PIL import Image
-# from bokeh.plotting import figure
-# from pathlib import Path
-# import joblib
-
-# def get_table_download_link(df):
-#     """Generates a link allowing the data in a given panda dataframe to be downloaded
-#     in:  dataframe
-#     out: href string
-#     """
-#     csv = df.to_csv(index=False)
-#     b64 = base64.b64encode(csv.encode()).decode()  # some strings <-> bytes conversions necessary here
-#     # href = f'<a href="data:file/csv;base64,{b64}">Download csv file</a>'
-#     href = f'<a href="data:file/csv;base64,{b64}" download="prediction_output.csv">Click here to download the outcome in .csv file</a>'
-#     return href
-
-# """
-# # :microscope: AuNRs Size Prediction 
-# ### Ver. 1.2 released on 10/1/2022
-
-# **_Instruction_**:
-# 1. Upload .csv file with first row "E_res" and "Linewidth" in eV.
-# 2. Hit the prediction button
-# """
-
-# #  To input experimental data
-# st.header('Experimental Data Input')
-
-# uploaded_file = st.file_uploader("Upload your data", type="csv")
-
-# use_example_file = st.checkbox(
-#     "Use example file", False, help="Use in-built example file to the app"
-# )
-
-# if 'use_example_file' not in st.session_state:
-#     st.session_state.use_example_file = True 
-
-# if st.session_state.use_example_file:
-#     example_path = Path(__file__).parent / "SampleData.csv"
-#     if example_path.exists():
-#         exp_data = pd.read_csv(example_path)
-#         st.write("Sample data loaded.")
-#     else:
-#         st.error("Not Found Error")
-
-# if uploaded_file:
-#     exp_data = pd.read_csv(uploaded_file)
-
-#     st.markdown("### Data preview")
-#     st.dataframe(exp_data.head())
-
-# if st.button("Prediction"):
-
-#     st.text('Predicted results')
-#     w_model_path = Path(__file__).parent / 'joblib_width_gs.pkl'
-#     l_model_path = Path(__file__).parent / 'joblib_length_gs.pkl'
-#     dt_w_model = joblib.load(w_model_path)
-#     dt_l_model = joblib.load(l_model_path)
-
-#     wexp_y_pred = dt_w_model.predict(exp_data)
-#     lexp_y_pred = dt_l_model.predict(exp_data)
-
-#     df_P = pd.DataFrame({"Particle": range(1, len(exp_data['E_res']) + 1)})
-#     df_E = pd.DataFrame({"E_res (eV)": exp_data['E_res']})
-#     df_L = pd.DataFrame({"Linewidth (eV)": exp_data['Linewidth']})
-#     df_w = pd.DataFrame({"Predicted_Width (nm)": wexp_y_pred})
-#     df_l = pd.DataFrame({"Predicted_Length (nm)": lexp_y_pred})
-#     df_A = pd.DataFrame({"Aspect Ratio": lexp_y_pred / wexp_y_pred})
-#     DF1 = pd.concat([df_E, df_L], axis=1, sort=True)
-#     DF2 = pd.concat([df_w, df_l], axis=1, sort=True)
-#     dfff = pd.concat([DF1, DF2], axis=1, sort=True)
-#     dff = pd.concat([df_P, dfff], axis=1, sort=True)
-#     df = pd.concat([dff, df_A], axis=1, sort=True)
-
-#     Mean_df_E = exp_data['E_res'].mean()
-#     Mean_df_L = exp_data['Linewidth'].mean()
-#     Mean_df_w = wexp_y_pred.mean()
-#     Mean_df_l = lexp_y_pred.mean()
-#     Mean_df_A = (lexp_y_pred / wexp_y_pred).mean()
-
-#     Std_df_E = exp_data['E_res'].std()
-#     Std_df_L = exp_data['Linewidth'].std()
-#     Std_df_w = wexp_y_pred.std()
-#     Std_df_l = lexp_y_pred.std()
-#     Std_df_A = (lexp_y_pred / wexp_y_pred).std()
-
-#     column1 = ['Particle', 'E_res (eV)', 'Linewidth (eV)', 'Predicted_Width (nm)', 'Predicted_Length (nm)',
-#                'Aspect Ratio']
-#     list1 = [['Mean', Mean_df_E, Mean_df_L, Mean_df_w, Mean_df_l, Mean_df_A]]
-#     list2 = [['Std', Std_df_E, Std_df_L, Std_df_w, Std_df_l, Std_df_A]]
-#     df1 = pd.DataFrame(data=list1, columns=column1)
-#     df2 = pd.DataFrame(data=list2, columns=column1)
-#     df = df.append(df1, ignore_index=True)
-#     df = df.append(df2, ignore_index=True)
-
-#     p = figure(
-#         title='Scatter plot',
-#         x_axis_label='Predicted Width (nm)',
-#         y_axis_label='Predicted Length (nm)')
-
-#     p.scatter(wexp_y_pred, lexp_y_pred, size=5)
-#     st.bokeh_chart(p, use_container_width=True)
-
-#     st.markdown(get_table_download_link(df), unsafe_allow_html=True)
+    st.markdown(get_table_download_link(df), unsafe_allow_html=True)
