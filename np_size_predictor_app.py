@@ -94,8 +94,7 @@ if st.button("Prediction"):
     list2 = [['Std', Std_df_E, Std_df_L, Std_df_w, Std_df_l, Std_df_A]]
     df1 = pd.DataFrame(data=list1, columns=column1)
     df2 = pd.DataFrame(data=list2, columns=column1)
-    df = df.append(df1, ignore_index=True)
-    df = df.append(df2, ignore_index=True)
+    df = pd.concat([df, df1, df2], ignore_index=True)
 
     p = figure(
         title='Scatter plot',
