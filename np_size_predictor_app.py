@@ -8,6 +8,7 @@ from sklearn.tree import DecisionTreeRegressor as DTR
 from sklearn.model_selection import GridSearchCV
 # from PIL import Image
 from bokeh.plotting import figure
+from pathlib import Path
 import joblib
 
 def get_table_download_link(df):
@@ -39,9 +40,19 @@ use_example_file = st.checkbox(
     "Use example file", False, help="Use in-built example file to the app"
 )
 
-if use_example_file:
-    uploaded_file = "/Users/katsuyashiratori/Documents/GitHub/nanoparticle_size_predictor/SampleData.csv"
+if 'use_example_file' not in st.session_state:
+    st.session_state.use_example_file = True 
 
+if st.session_state.use_example_file:
+    example_path = Path(__file__).parent / "SampleData.csv"
+    if example_path.exists():
+        exp_data = pd.read_csv(example_path)
+        st.write("Sample data loaded.")
+    else:
+        st.error("Not Found Error")
+
+# if use_example_file:
+#     uploaded_file = "SampleData.csv"
 
 if uploaded_file:
     exp_data = pd.read_csv(uploaded_file)
